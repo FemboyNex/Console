@@ -91,7 +91,7 @@ namespace Console
     ▐███▌▐█▌.▐▌██▐█▌▐█▄▪▐█▐█▌.▐▌▐█▌▐▌▐█▄▄▌
     ·▀▀▀  ▀█▄▀▪▀▀ █▪ ▀▀▀▀  ▀█▄▀▪.▀▀▀  ▀▀▀       
            Console Portable {ConsoleVersion}
-     Developed by goldentrophy & Twigcore
+              Developed by goldentrophy 
 ");
 
             (GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset).supportsCameraOpaqueTexture = true;
