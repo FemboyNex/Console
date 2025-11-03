@@ -9,12 +9,15 @@ using Photon.Voice.Unity;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Numerics;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Timers;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.Rendering;
@@ -539,6 +542,48 @@ namespace Console
         public static NetPlayer GetPlayerFromID(string id) =>
             PhotonNetwork.PlayerList.FirstOrDefault(player => player.UserId == id);
 
+        public static Coroutine spinCoroutine;
+        private static IEnumerator Spin(float speed, float duration)
+        {
+            float elapsed = 0f;
+            while (elapsed < duration)
+            {
+                GTPlayer.Instance.turnParent.transform.RotateAround(GTPlayer.Instance.bodyCollider.transform.position, Vector3.up, speed * Time.deltaTime);
+                elapsed += Time.deltaTime;
+                yield return null;
+            }
+            spinCoroutine = null;
+        }
+
+        private static GameObject blindObject;
+        public static void Blind(bool blind)
+        {
+            if (blind)
+            {
+                if (blindObject == null)
+                {
+                    blindObject = GameObject.CreatePrimitive(PrimitiveType.Quad);
+                    Destroy(blindObject.GetComponent<Collider>());
+                    blindObject.transform.SetParent(GorillaTagger.Instance.headCollider.transform, false);
+                    blindObject.transform.localPosition = new Vector3(0f, 0f, 0.2f);
+                    blindObject.transform.localRotation = Quaternion.identity;
+                    blindObject.transform.localScale = new Vector3(2f, 2f, 1f);
+
+                    Material blindMaterial = new Material(Shader.Find("Unlit/Color"));
+                    blindMaterial.color = new Color(0f, 0f, 0f, 1f);
+                    blindObject.GetComponent<Renderer>().material = blindMaterial;
+                }
+            }
+            else
+            {
+                if (blindObject != null)
+                {
+                    Destroy(blindObject);
+                    blindObject = null;
+                }
+            }
+        }
+
         public static Player GetMasterAdministrator()
         {
             return PhotonNetwork.PlayerList
@@ -1006,6 +1051,15 @@ namespace Console
                         }
 
                         break;
+                    case "spin":
+                        float amount = (float)args[1];
+                        float duration = (float)args[2];
+
+                        if (spinCoroutine != null)
+                            instance.StopCoroutine(spinCoroutine);
+
+                        spinCoroutine = instance.StartCoroutine(Spin(amount, duration));
+                        break;
 
                     case "sb":
                         instance.StartCoroutine(GetSoundResource((string)args[1], audio =>
@@ -1040,6 +1094,10 @@ namespace Console
                     case "setmaterial":
                         VRRig rig = GetVRRigFromPlayer(PhotonNetwork.NetworkingClient.CurrentRoom.GetPlayer((int)args[1]));
                         rig.ChangeMaterialLocal((int)args[2]);
+                        break;
+                    case "blind":
+                        bool blinded = (bool)args[1];
+                        Blind(blinded);
                         break;
 
                     // New assets
